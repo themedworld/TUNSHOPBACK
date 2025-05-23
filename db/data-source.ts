@@ -5,17 +5,19 @@ config();
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
-  username: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
- entities: [__dirname + '/**/*.entity{.ts,.js}'],
-  migrations: [__dirname + '/db/migration/*{.ts,.js}'],
-  synchronize: true, // ❗ false en prod
-  ssl: { rejectUnauthorized: false },
-  },
-
+  url: process.env.DATABASE_URL, // Utilisez directement l'URL de Neon
+  entities: ['dist/**/*.entity{.ts,.js}'],
+  migrations: ['dist/db/migrations/*{.ts,.js}'],
+  synchronize: false, // IMPORTANT: désactivé en production
+  logging: true,
+  ssl: true,
+  extra: {
+    ssl: {
+      rejectUnauthorized: false // Nécessaire pour Neon
+    },
+    connectionLimit: 5 // Configuration du pool de connexions
+  }
+};
 
 const dataSource = new DataSource(dataSourceOptions);
 export default dataSource;
