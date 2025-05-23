@@ -10,14 +10,12 @@ export const dataSourceOptions: DataSourceOptions = {
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
-  entities: [__dirname + '/**/*.entity{.ts,.js}'],
+ entities: [__dirname + '/**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/db/migration/*{.ts,.js}'],
-  logging: false,
-  synchronize: true, // ❗ Mettre à false en production
-  ssl: {
-    rejectUnauthorized: false,
+  synchronize: true, // ❗ false en prod
+  ssl: { rejectUnauthorized: false },
   },
-};
+
 
 const dataSource = new DataSource(dataSourceOptions);
 export default dataSource;
