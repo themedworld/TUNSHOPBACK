@@ -8,7 +8,7 @@ npm install typeorm@0.3.x pg --save-exact  # Version compatible avec NestJS
 
 # Builder le projet
 echo "Building project..."
-nest build
+npm run build
 
 # Exécuter les migrations via le npx local
 if [ -f "dist/src/db/data-source.js" ]; then
