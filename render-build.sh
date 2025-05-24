@@ -1,11 +1,20 @@
 #!/bin/bash
 set -o errexit -o pipefail
 
-# Installation des dépendances
+# Installation explicite du CLI NestJS en local
+echo "Installing NestJS CLI locally..."
 npm install @nestjs/cli
-npm install
 
-# Builder le projet (optionnel pour le mode watch)
-nest build --watch
+# Installation des dépendances
+echo "Installing dependencies..."
+npm install --legacy-peer-deps  # Ignore les conflits de peer dependencies
 
-echo "✅ Configuration prête pour le mode watch"
+# Build du projet
+echo "Building project..."
+npx nest build
+
+# Vérification des fichiers générés
+echo "Verifying build output..."
+ls -l dist/
+
+echo "✅ Build completed successfully"
