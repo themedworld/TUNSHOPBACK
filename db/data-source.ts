@@ -1,8 +1,5 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { config } from 'dotenv';
-import { UserEntity } from '../src/users/entities/user.entity';
-import { Product } from '../src/product/entities/product.entity';
-import { Commande } from '../src/commandes/entities/commande.entity';
 
 config();
 
@@ -10,7 +7,7 @@ export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   url: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  entities: [UserEntity, Product, Commande],
+  entities: ['dist/**/*.entity{.ts,.js}'],
   migrations: ['dist/db/migrations/*.js'],
   synchronize: false,
   logging: true,
