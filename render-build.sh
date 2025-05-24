@@ -1,21 +1,16 @@
 #!/bin/bash
 set -o errexit -o pipefail
 
-# Installation explicite des dépendances
-echo "➡️ Installing dependencies..."
-npm install @nestjs/cli typeorm pg --save-exact
-npm install
+# Force l'installation des dépendances dev
+npm install --include=dev
 
-# Build du projet
-echo "➡️ Building project..."
+# Build explicite
 npm run build
 
-# Vérification des fichiers
-echo "➡️ Verifying build output..."
-if [ -f "dist/src/main.js" ]; then
-  echo "✅ Build successful - main.js found"
-else
-  echo "❌ Error: main.js not found!"
+# Vérification stricte
+if [ ! -f "dist/src/main.js" ]; then
+  echo "❌ ERREUR: dist/src/main.js manquant!"
+  echo "Structure du dossier:"
   ls -R dist/
   exit 1
 fi
