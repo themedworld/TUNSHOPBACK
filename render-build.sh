@@ -1,21 +1,14 @@
 #!/bin/bash
 set -o errexit -o pipefail
 
-# Installer Nest CLI et TypeORM en local (pas en global)
-echo "Installing dependencies..."
-npm install -g @nestjs/cli
-npm install typeorm@0.3.x pg --save-exact  # Version compatible avec NestJS
+echo "➡️ Installation des dépendances..."
+npm install
 
-# Builder le projet
-echo "Building project..."
+echo "➡️ Construction du projet..."
 npm run build
 
-# Exécuter les migrations via le npx local
-if [ -f "dist/src/db/data-source.js" ]; then
-  echo "Running migrations..."
-  npx typeorm-ts-node-commonjs migration:run -d dist/src/db/data-source.js
-else
-  echo "No migrations found at dist/src/db/data-source.js"
-fi
+echo "➡️ Vérification des fichiers générés..."
+ls -l dist/ || echo "⚠️ Aucun fichier dans dist/"
+ls -l dist/src/ || echo "⚠️ Aucun fichier dans dist/src/"
 
-echo "Build completed successfully"
+echo "✅ Build terminé avec succès"
