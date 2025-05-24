@@ -11,7 +11,7 @@ async function bootstrap() {
 
   app.use(cors({
     origin: 'http://localhost:3000',
-             'https://tunshop-v86p-git-main-themedworlds-projects.vercel.app'
+             'https://tunshop-v86p-git-main-themedworlds-projects.vercel.app',
     credentials: true,
   }));
   app.setGlobalPrefix('api/v1')
