@@ -8,15 +8,7 @@ import { CommandesModule } from './commandes/commandes.module';
 
 
 @Module({
-  imports: [// app.module.ts
-TypeOrmModule.forRoot({
-  type: 'postgres',
-  url: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }, // Nécessaire pour certains setups
-  synchronize: false, // Désactivez en production !
-  autoLoadEntities: true,
-  logging: true,
-}), UsersModule, ProductModule, CommandesModule],
+  imports: [TypeOrmModule.forRoot(dataSourceOptions), UsersModule, ProductModule, CommandesModule],
   controllers: [],
   providers: [],
 })

@@ -1,22 +1,24 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { config } from 'dotenv';
+import * as pg from 'pg'; // Important pour Neon
 
 config();
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
-  url: process.env.DATABASE_URL, // Utilisez directement l'URL de Neon
+  url: process.env.DATABASE_URL, // Utilisez l'URL complète (avec pooler)
+  ssl: {
+    rejectUnauthorized: false // Obligatoire pour Neon
+  },
   entities: ['dist/**/*.entity{.ts,.js}'],
-  migrations: ['dist/db/migrations/*{.ts,.js}'],
-  synchronize: false, // IMPORTANT: désactivé en production
-  logging: true,
-  ssl: true,
+  migrations: ['dist/db/migrations/*.js'], // Chemin corrigé
+  synchronize: process.env.NODE_ENV !== 'production', // Désactivé en prod
+  logging: process.env.NODE_ENV === 'development',
   extra: {
-    ssl: {
-      rejectUnauthorized: false // Nécessaire pour Neon
-    },
-    connectionLimit: 5 // Configuration du pool de connexions
-  }
+    connectionLimit: 5, // Important pour le pooler Neon
+    idleTimeoutMillis: 10000
+  },
+  driver: pg // Spécifique à Neon
 };
 
 const dataSource = new DataSource(dataSourceOptions);
