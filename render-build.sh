@@ -1,14 +1,11 @@
 #!/bin/bash
 set -o errexit -o pipefail
 
-echo "➡️ Installation des dépendances..."
+# Installation des dépendances
+npm install @nestjs/cli
 npm install
 
-echo "➡️ Construction du projet..."
-npm run build
+# Builder le projet (optionnel pour le mode watch)
+nest build --watch
 
-echo "➡️ Vérification des fichiers générés..."
-ls -l dist/ || echo "⚠️ Aucun fichier dans dist/"
-ls -l dist/src/ || echo "⚠️ Aucun fichier dans dist/src/"
-
-echo "✅ Build terminé avec succès"
+echo "✅ Configuration prête pour le mode watch"
