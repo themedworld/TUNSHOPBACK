@@ -9,7 +9,7 @@ export const dataSourceOptions: DataSourceOptions = {
   ssl: { rejectUnauthorized: false },
   entities: ['dist/**/*.entity{.ts,.js}'],
   migrations: ['dist/db/migrations/*.js'],
-  synchronize: false,
+  synchronize: true,
   logging: true,
 };
 
