@@ -1,8 +1,8 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { config } from 'dotenv';
-import { UserEntity } from './src/user/entities/user.entity';
-import { Product } from './src/product/entities/product.entity';
-import { Commande } from './src/commandes/entities/commande.entity';
+import { UserEntity } from '../src/users/entities/user.entity';
+import { Product } from '../src/product/entities/product.entity';
+import { Commande } from '../src/commandes/entities/commande.entity';
 
 config();
 
