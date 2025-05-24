@@ -1,20 +1,21 @@
 #!/bin/bash
 set -o errexit -o pipefail
 
-# Installation explicite du CLI NestJS en local
-echo "Installing NestJS CLI locally..."
-npm install @nestjs/cli
-
-# Installation des dépendances
-echo "Installing dependencies..."
-npm install --legacy-peer-deps  # Ignore les conflits de peer dependencies
+# Installation explicite des dépendances
+echo "➡️ Installing dependencies..."
+npm install @nestjs/cli typeorm pg --save-exact
+npm install
 
 # Build du projet
-echo "Building project..."
-npx nest build
+echo "➡️ Building project..."
+npm run build
 
-# Vérification des fichiers générés
-echo "Verifying build output..."
-ls -l dist/
-
-echo "✅ Build completed successfully"
+# Vérification des fichiers
+echo "➡️ Verifying build output..."
+if [ -f "dist/src/main.js" ]; then
+  echo "✅ Build successful - main.js found"
+else
+  echo "❌ Error: main.js not found!"
+  ls -R dist/
+  exit 1
+fi

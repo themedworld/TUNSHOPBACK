@@ -4,16 +4,13 @@ import { config } from 'dotenv';
 config();
 
 export const dataSourceOptions: DataSourceOptions = {
-    type: 'postgres',
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE,
-    entities: ['dist/**/*.entity{.ts,.js}'],
-    migrations: ['dist/db/migration/*{.ts,.js}'],
-    logging: false,
-    synchronize: true
+  type: 'postgres',
+  url: process.env.DATABASE_URL, // Utilisez l'URL complète de Neon
+  ssl: { rejectUnauthorized: false },
+  entities: ['dist/**/*.entity{.ts,.js}'],
+  migrations: ['dist/db/migrations/*.js'],
+  synchronize: false, // Désactivé en production
+  logging: true
 };
 
 const dataSource = new DataSource(dataSourceOptions);
