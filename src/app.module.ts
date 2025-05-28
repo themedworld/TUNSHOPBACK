@@ -8,7 +8,12 @@ import { CommandesModule } from './commandes/commandes.module';
 
 
 @Module({
-  imports: [TypeOrmModule.forRoot(dataSourceOptions), UsersModule, ProductModule, CommandesModule],
+  imports: [
+    TypeOrmModule.forRoot(dataSourceOptions),
+    UsersModule,
+    ProductModule,
+    CommandesModule,
+  ],
   controllers: [],
   providers: [],
 })
@@ -19,4 +24,3 @@ export class AppModule {
       .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }
-

@@ -6,6 +6,17 @@ import { CreateCommandeDto } from './dto/create-commande.dto';
 import { OrderItemEntity } from './entities/order-item-entity.entity';
 import { UserEntity } from '../users/entities/user.entity';
 import { Product } from '../product/entities/product.entity';
+export interface SoldProduct {
+  product_id: number;
+  product_name: string;
+  product_price: number;
+  product_discountedPrice: number | null;
+  product_prixachat: number | null;
+  items_quantity: number;
+  items_unitPrice: number;
+  commande_orderDate: Date;
+  commande_status: string;
+}
 
 @Injectable()
 export class CommandesService {
@@ -227,23 +238,247 @@ export class CommandesService {
 
 
 // src/commandes/commandes.service.ts
-async getSoldProducts(userid: number) {
-  return this.commandeRepository
-    .createQueryBuilder('commande')
-    .leftJoinAndSelect('commande.items', 'items')
-    .leftJoinAndSelect('items.product', 'product')
-    .leftJoinAndSelect('product.user', 'user')
-    .where('user.id = :userid', { userid })
-    .select([
-      'product.id',
-      'product.name',
-      'items.quantity',
-      'items.unitPrice',
-      'commande.orderDate',
-      'commande.status'
-    ])
-    .orderBy('commande.orderDate', 'DESC')
-    .getRawMany();
-}
 
+async getSoldProducts(sellerId: number): Promise<SoldProduct[]> {
+    return this.commandeRepository
+      .createQueryBuilder('commande')
+      .leftJoinAndSelect('commande.items', 'items')
+      .leftJoinAndSelect('items.product', 'product')
+      .leftJoinAndSelect('product.user', 'seller') // Jointure avec le vendeur du produit
+      .where('seller.id = :sellerId', { sellerId }) // Filtre par ID du vendeur
+      .select([
+        'product.id as product_id',
+        'product.name as product_name',
+        'product.price as product_price',
+        'product.discountedPrice as product_discountedPrice',
+        'product.prixachat as product_prixachat',
+        'items.quantity as items_quantity',
+        'items.unitPrice as items_unitPrice',
+        'commande.orderDate as commande_orderDate',
+        'commande.status as commande_status',
+        'commande.id as commande_id', // Ajouté pour référence
+        'commande.user as buyer' // Information sur l'acheteur
+      ])
+      .orderBy('commande.orderDate', 'DESC')
+      .getRawMany();
+}
+ async getProductProfits(userid: number) {
+    try {
+      // Refresh cache
+      await this.commandeRepository.manager.connection.queryResultCache?.remove(['profits_cache_key']);
+
+      // Get all orders with items and products
+      const commandes = await this.commandeRepository.find({
+        relations: ['items', 'items.product', 'items.product.user'],
+        cache: {
+          id: 'profits_cache_key',
+          milliseconds: 30000
+        },
+        order: { orderDate: 'DESC' }
+      });
+
+      if (!commandes || commandes.length === 0) {
+        return this.createEmptyResponse();
+      }
+
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
+                        "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+
+      const results = {
+        annualProducts: {} as Record<number, {
+          productId: number;
+          productName: string;
+          totalProfit: number;
+          totalQuantity: number;
+        }>,
+        monthlyProducts: {} as Record<number, Record<number, {
+          productId: number;
+          productName: string;
+          totalProfit: number;
+          totalQuantity: number;
+        }>>,
+        dailyProducts: {} as Record<string, Record<number, {
+          productId: number;
+          productName: string;
+          totalProfit: number;
+          totalQuantity: number;
+        }>>,
+        annualTotal: 0,
+        monthlyTotals: {} as Record<number, {
+          month: number;
+          monthName: string;
+          totalProfit: number;
+        }>,
+        dailyTotals: {} as Record<string, {
+          date: string;
+          totalProfit: number;
+        }>,
+        bestSellingProduct: null as null | {
+          productId: number;
+          productName: string;
+          totalProfit: number;
+          totalQuantity: number;
+        },
+        monthComparison: null as null | {
+          difference: number;
+          percentage: number;
+        },
+        lastUpdated: new Date()
+      };
+
+      // Process all orders
+      for (const commande of commandes) {
+        if (!commande.orderDate) {
+          console.warn('Commande sans date:', commande.id);
+          continue;
+        }
+
+        const orderDate = new Date(commande.orderDate);
+        const orderYear = orderDate.getFullYear();
+        const orderMonth = orderDate.getMonth();
+        const orderDay = orderDate.getDate();
+        const dateKey = `${orderYear}-${String(orderMonth + 1).padStart(2, '0')}-${String(orderDay).padStart(2, '0')}`;
+
+        // Filter for current year only
+        if (orderYear !== currentYear) continue;
+
+        for (const item of commande.items) {
+          // Verify product belongs to the seller (userid)
+          if (!item.product || !item.product.user || item.product.user.id !== userid) {
+            continue;
+          }
+
+          const productId = item.product.id;
+          const productName = item.product.name;
+          const profit = this.calculateItemProfit(item);
+          const quantity = item.quantity;
+
+          // Update statistics
+          this.updateStats(results.annualProducts, productId, productName, profit, quantity);
+          results.annualTotal += profit;
+
+          if (!results.monthlyProducts[orderMonth]) {
+            results.monthlyProducts[orderMonth] = {};
+            results.monthlyTotals[orderMonth] = {
+              month: orderMonth,
+              monthName: monthNames[orderMonth],
+              totalProfit: 0
+            };
+          }
+          this.updateStats(results.monthlyProducts[orderMonth], productId, productName, profit, quantity);
+          results.monthlyTotals[orderMonth].totalProfit += profit;
+
+          if (!results.dailyProducts[dateKey]) {
+            results.dailyProducts[dateKey] = {};
+            results.dailyTotals[dateKey] = {
+              date: dateKey,
+              totalProfit: 0
+            };
+          }
+          this.updateStats(results.dailyProducts[dateKey], productId, productName, profit, quantity);
+          results.dailyTotals[dateKey].totalProfit += profit;
+        }
+      }
+
+      // Find best selling product
+      this.findBestSellingProduct(results);
+
+      // Calculate month comparison
+      this.calculateMonthComparison(results, currentMonth);
+
+      return results;
+
+    } catch (error) {
+      console.error('Error in getProductProfits:', error);
+      return this.createEmptyResponse();
+    }
+  }
+
+  // Helper method to calculate item profit
+  private calculateItemProfit(item: OrderItemEntity): number {
+    if (!item.product) {
+      console.warn('Item sans produit:', item.id);
+      return 0;
+    }
+    
+    const sellingPrice = item.product.discountedPrice ?? item.product.price;
+    const purchasePrice = item.product.prixachat ?? 0;
+    
+    if (isNaN(sellingPrice) || isNaN(purchasePrice)) {
+      console.error('Prix invalide pour le produit:', item.product.id);
+      return 0;
+    }
+    
+    return (sellingPrice - purchasePrice) * item.quantity;
+  }
+
+  // Helper method to update statistics
+  private updateStats(
+    target: Record<number, any>,
+    productId: number,
+    productName: string,
+    profit: number,
+    quantity: number
+  ) {
+    if (!target[productId]) {
+      target[productId] = {
+        productId,
+        productName,
+        totalProfit: 0,
+        totalQuantity: 0
+      };
+    }
+    target[productId].totalProfit += profit;
+    target[productId].totalQuantity += quantity;
+  }
+
+  // Helper method to find best selling product
+  private findBestSellingProduct(results: any) {
+    let maxProfit = 0;
+    Object.values(results.annualProducts).forEach((product: any) => {
+      if (product.totalProfit > maxProfit) {
+        maxProfit = product.totalProfit;
+        results.bestSellingProduct = { ...product };
+      }
+    });
+  }
+
+  // Helper method to calculate month comparison
+  private calculateMonthComparison(results: any, currentMonth: number) {
+    if (currentMonth > 0) {
+      const currentMonthTotal = results.monthlyTotals[currentMonth]?.totalProfit || 0;
+      const previousMonthTotal = results.monthlyTotals[currentMonth - 1]?.totalProfit || 0;
+      
+      results.monthComparison = {
+        difference: currentMonthTotal - previousMonthTotal,
+        percentage: previousMonthTotal > 0 
+          ? ((currentMonthTotal - previousMonthTotal) / previousMonthTotal * 100)
+          : 100
+      };
+    }
+  }
+
+  // Helper method to create empty response
+  private createEmptyResponse() {
+    return {
+      annualProducts: {},
+      monthlyProducts: {},
+      dailyProducts: {},
+      annualTotal: 0,
+      monthlyTotals: {},
+      dailyTotals: {},
+      bestSellingProduct: null,
+      monthComparison: null,
+      lastUpdated: new Date()
+    };
+  }
+
+  // Method to force refresh statistics
+  async refreshStatistics(userid: number) {
+    await this.commandeRepository.manager.connection.queryResultCache?.remove(['profits_cache_key']);
+    return this.getProductProfits(userid);
+  }
 }

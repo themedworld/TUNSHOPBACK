@@ -10,10 +10,14 @@ async function bootstrap() {
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
   app.use(cors({
-    origin: 'http://localhost:3000', 
+    origin: ['http://localhost:3000',
+             'https://tunshop-v86p.vercel.app',
+             'https://tunshop-v86p.vercel.app/',
+              ],
     credentials: true,
   }));
   app.setGlobalPrefix('api/v1')
-  await app.listen(3001);
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
 }
 bootstrap();

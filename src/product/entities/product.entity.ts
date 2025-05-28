@@ -20,7 +20,8 @@ export class Product {
 
   @Column('decimal', { precision: 10, scale: 2, nullable: true })
   discountedPrice: number | null;
-
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  prixachat: number | null;
   @Column('text')
   description: string;
 

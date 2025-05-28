@@ -18,7 +18,10 @@ export class UpdateProductDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
   discountedPrice?: number | null;
-
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @IsPositive()
+  prixachat?: number | null;
   @IsOptional()
   @IsString()
   description?: string;

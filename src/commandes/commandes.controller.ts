@@ -34,4 +34,29 @@ async getSoldProducts(@Param('sellerId') sellerId: string) {
   remove(@Param('id') id: string) {
     return this.commandesService.remove(+id);
   }
+    @Get('profits/user/:userId')
+  async getProductProfits(@Param('userId') userId: string) {
+    return await this.commandesService.getProductProfits(parseInt(userId));
+  }
+
+  @Get('profits/user/:userId/annual')
+  async getAnnualProfits(@Param('userId') userId: string) {
+    const profits = await this.commandesService.getProductProfits(parseInt(userId));
+    return profits.monthlyProducts;
+  }
+
+  @Get('profits/user/:userId/monthly')
+  async getMonthlyProfits(@Param('userId') userId: string) {
+    const profits = await this.commandesService.getProductProfits(parseInt(userId));
+    return profits.monthlyProducts;
+  }
+
+  @Get('profits/user/:userId/best-month')
+  async getBestMonth(@Param('userId') userId: string) {
+    const profits = await this.commandesService.getProductProfits(parseInt(userId));
+    return {
+      
+      comparison: profits.monthComparison
+    };
+  }
 }
