@@ -12,6 +12,7 @@ async function bootstrap() {
   app.use(cors({
     origin: ['http://localhost:3000',
              'https://tunshop.vercel.app',
+             'https://tunshop-v86p.vercel.app',
               ],
     credentials: true,
   }));
